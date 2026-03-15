@@ -1,0 +1,37 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+venv/
+.venv/
+*.egg
+
+# Node
+node_modules/
+dist/
+
+# Data
+data/uploads/*
+data/stems/*
+data/enhanced/*
+data/exports/*
+data/models/*
+data/rl/*
+!data/*/.gitkeep
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+*.swp
+
+# Environment
+.env
+.env.local
+
+# Research docs (not part of app)
+research-*.md
+docs/research/
