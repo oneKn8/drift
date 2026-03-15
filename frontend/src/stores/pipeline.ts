@@ -20,11 +20,10 @@ interface PipelineState {
 }
 
 const defaultStages: PipelineStage[] = [
-  { name: "analysis", model: "librosa", status: "idle", progress: 0 },
-  { name: "separation", model: "htdemucs", status: "idle", progress: 0 },
-  { name: "denoise", model: "deepfilter", status: "idle", progress: 0 },
+  { name: "denoise", model: "deepfilternet", status: "idle", progress: 0 },
+  { name: "separate", model: "htdemucs", status: "idle", progress: 0 },
   { name: "super_resolution", model: "flashsr", status: "idle", progress: 0 },
-  { name: "mastering", model: "matchering", status: "idle", progress: 0 },
+  { name: "master", model: "matchering", status: "idle", progress: 0 },
 ];
 
 export const usePipelineStore = create<PipelineState>((set, get) => ({

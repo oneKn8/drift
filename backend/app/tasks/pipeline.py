@@ -72,7 +72,7 @@ def _run_separate(
     model = models.get("separate", "htdemucs")
 
     def progress_callback(progress: float) -> None:
-        _broadcast(track_id, "separate", "running", progress, "Separating stems")
+        _broadcast(track_id, "separate", "processing", progress, "Separating stems")
 
     stem_paths = separate_stems(
         input_path,
@@ -179,7 +179,7 @@ def run_pipeline(
 
     for idx, stage in enumerate(stages):
         overall_progress = idx / total_stages
-        _broadcast(track_id, stage, "starting", overall_progress, f"Starting {stage}")
+        _broadcast(track_id, stage, "processing", overall_progress, f"Starting {stage}")
         logger.info("Pipeline stage '{}' starting for track_id={}", stage, track_id)
 
         try:
@@ -222,7 +222,7 @@ def run_pipeline(
             }
             results["status"] = "failed"
             results["error"] = error_msg
-            _broadcast(track_id, stage, "failed", 0.0, error_msg)
+            _broadcast(track_id, stage, "error", 0.0, error_msg)
 
             # Save partial results before raising
             _save_results(track_id, results)

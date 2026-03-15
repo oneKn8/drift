@@ -5,14 +5,13 @@ import { runPipeline } from "../../hooks/useApi";
 import { StageCard } from "./StageCard";
 
 const stageModels: Record<string, { value: string; label: string }[]> = {
-  analysis: [{ value: "librosa", label: "Librosa" }],
   denoise: [{ value: "deepfilternet", label: "DeepFilterNet" }],
-  separation: [
+  separate: [
     { value: "htdemucs", label: "HTDemucs" },
     { value: "htdemucs_ft", label: "HTDemucs (Fine-tuned)" },
   ],
   super_resolution: [{ value: "flashsr", label: "FlashSR" }],
-  mastering: [{ value: "matchering", label: "Matchering" }],
+  master: [{ value: "matchering", label: "Matchering" }],
 };
 
 export function PipelinePanel() {

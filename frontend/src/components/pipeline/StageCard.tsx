@@ -22,11 +22,10 @@ const statusColors: Record<ProcessingStatus, string> = {
 };
 
 const stageLabels: Record<string, string> = {
-  analysis: "Analysis",
-  separation: "Separation",
   denoise: "Denoise",
+  separate: "Separation",
   super_resolution: "Super Res",
-  mastering: "Mastering",
+  master: "Mastering",
 };
 
 export function StageCard({

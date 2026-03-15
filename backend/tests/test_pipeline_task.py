@@ -79,7 +79,7 @@ def test_load_track_meta_missing(fake_track):
 @patch("app.tasks.pipeline.r")
 def test_broadcast_publishes_to_redis(mock_redis):
     """Broadcast should publish a JSON message to the pipeline_progress channel."""
-    _broadcast("track123", "denoise", "starting", 0.25, "Starting denoise")
+    _broadcast("track123", "denoise", "processing", 0.25, "Starting denoise")
     mock_redis.publish.assert_called_once()
     call_args = mock_redis.publish.call_args
     assert call_args[0][0] == "pipeline_progress"
@@ -87,7 +87,7 @@ def test_broadcast_publishes_to_redis(mock_redis):
     assert payload["type"] == "progress"
     assert payload["track_id"] == "track123"
     assert payload["stage"] == "denoise"
-    assert payload["status"] == "starting"
+    assert payload["status"] == "processing"
     assert payload["progress"] == 0.25
 
 
@@ -167,3 +167,162 @@ def test_run_pipeline_stage_failure_saves_partial_results(
     loaded = json.loads(results_path.read_text())
     assert loaded["status"] == "failed"
     assert loaded["stages"]["denoise"]["status"] == "failed"
+
+
+@patch("app.tasks.pipeline.r")
+@patch("app.tasks.pipeline._run_master")
+@patch("app.tasks.pipeline._run_super_resolution")
+@patch("app.tasks.pipeline._run_separate")
+@patch("app.tasks.pipeline._run_denoise")
+def test_run_pipeline_full_four_stage_chain(
+    mock_denoise, mock_separate, mock_super_res, mock_master, mock_redis, fake_track
+):
+    """Full 4-stage pipeline chains outputs correctly: each stage receives previous output."""
+    tid = fake_track["track_id"]
+    pdir = fake_track["pipeline_dir"] / tid
+
+    # Create fake output files for each stage
+    denoise_out = pdir / "denoise" / "denoised.wav"
+    denoise_out.parent.mkdir(parents=True, exist_ok=True)
+    denoise_out.write_bytes(b"denoised")
+
+    separate_out = pdir / "stems" / "other.wav"
+    separate_out.parent.mkdir(parents=True, exist_ok=True)
+    separate_out.write_bytes(b"separated")
+
+    super_res_out = pdir / "super_resolution" / "upscaled.wav"
+    super_res_out.parent.mkdir(parents=True, exist_ok=True)
+    super_res_out.write_bytes(b"upscaled")
+
+    master_out = pdir / "master" / "mastered.wav"
+    master_out.parent.mkdir(parents=True, exist_ok=True)
+    master_out.write_bytes(b"mastered")
+
+    mock_denoise.return_value = {"output_path": str(denoise_out)}
+    mock_separate.return_value = {"output_path": str(separate_out), "stems": {}}
+    mock_super_res.return_value = {"output_path": str(super_res_out)}
+    mock_master.return_value = {"output_path": str(master_out)}
+
+    result = run_pipeline.apply(
+        args=[tid],
+        kwargs={"stages": ["denoise", "separate", "super_resolution", "master"]},
+    ).get()
+
+    assert result["status"] == "complete"
+    assert len(result["stages"]) == 4
+    for stage_name in ["denoise", "separate", "super_resolution", "master"]:
+        assert result["stages"][stage_name]["status"] == "complete"
+
+    # Verify chaining: each stage received the previous stage's output as input
+    # denoise gets original
+    denoise_input = mock_denoise.call_args[0][0]
+    assert str(denoise_input).endswith(f"{tid}.wav")
+
+    # separate gets denoise output
+    separate_input = mock_separate.call_args[0][0]
+    assert str(separate_input) == str(denoise_out)
+
+    # super_resolution gets separate output
+    super_res_input = mock_super_res.call_args[0][0]
+    assert str(super_res_input) == str(separate_out)
+
+    # master gets super_resolution output + original as reference
+    master_input = mock_master.call_args[0][0]
+    master_ref = mock_master.call_args[0][1]
+    assert str(master_input) == str(super_res_out)
+    assert str(master_ref).endswith(f"{tid}.wav")
+
+    # Verify final output path
+    assert result["final_output"] == str(master_out)
+
+
+@patch("app.tasks.pipeline.r")
+@patch("app.tasks.pipeline._run_master")
+@patch("app.tasks.pipeline._run_denoise")
+def test_run_pipeline_partial_stages_chain(
+    mock_denoise, mock_master, mock_redis, fake_track
+):
+    """Running only denoise + master still chains correctly (skip separate and super_res)."""
+    tid = fake_track["track_id"]
+    pdir = fake_track["pipeline_dir"] / tid
+
+    denoise_out = pdir / "denoise" / "denoised.wav"
+    denoise_out.parent.mkdir(parents=True, exist_ok=True)
+    denoise_out.write_bytes(b"denoised")
+
+    master_out = pdir / "master" / "mastered.wav"
+    master_out.parent.mkdir(parents=True, exist_ok=True)
+    master_out.write_bytes(b"mastered")
+
+    mock_denoise.return_value = {"output_path": str(denoise_out)}
+    mock_master.return_value = {"output_path": str(master_out)}
+
+    result = run_pipeline.apply(
+        args=[tid],
+        kwargs={"stages": ["denoise", "master"]},
+    ).get()
+
+    assert result["status"] == "complete"
+    assert len(result["stages"]) == 2
+
+    # master receives denoise output, not original
+    master_input = mock_master.call_args[0][0]
+    assert str(master_input) == str(denoise_out)
+
+
+@patch("app.tasks.pipeline.r")
+@patch("app.tasks.pipeline._run_super_resolution")
+@patch("app.tasks.pipeline._run_separate")
+@patch("app.tasks.pipeline._run_denoise")
+def test_run_pipeline_mid_chain_failure(
+    mock_denoise, mock_separate, mock_super_res, mock_redis, fake_track
+):
+    """When separate fails mid-chain, denoise results are saved and super_res is not called."""
+    tid = fake_track["track_id"]
+    pdir = fake_track["pipeline_dir"] / tid
+
+    denoise_out = pdir / "denoise" / "denoised.wav"
+    denoise_out.parent.mkdir(parents=True, exist_ok=True)
+    denoise_out.write_bytes(b"denoised")
+
+    mock_denoise.return_value = {"output_path": str(denoise_out)}
+    mock_separate.side_effect = RuntimeError("Separation OOM")
+
+    with pytest.raises(RuntimeError, match="Separation OOM"):
+        run_pipeline.apply(
+            args=[tid],
+            kwargs={"stages": ["denoise", "separate", "super_resolution"]},
+        ).get()
+
+    results_path = pdir / "pipeline_results.json"
+    loaded = json.loads(results_path.read_text())
+    assert loaded["status"] == "failed"
+    assert loaded["stages"]["denoise"]["status"] == "complete"
+    assert loaded["stages"]["separate"]["status"] == "failed"
+    assert "super_resolution" not in loaded["stages"]
+    mock_super_res.assert_not_called()
+
+
+@patch("app.tasks.pipeline.r")
+@patch("app.tasks.pipeline._run_denoise")
+def test_broadcast_uses_correct_status_values(mock_denoise, mock_redis, fake_track):
+    """Verify broadcasts use frontend-compatible status values: processing, complete, error."""
+    denoise_out = fake_track["pipeline_dir"] / fake_track["track_id"] / "d.wav"
+    denoise_out.parent.mkdir(parents=True, exist_ok=True)
+    denoise_out.write_bytes(b"x")
+    mock_denoise.return_value = {"output_path": str(denoise_out)}
+
+    run_pipeline.apply(
+        args=[fake_track["track_id"]],
+        kwargs={"stages": ["denoise"]},
+    ).get()
+
+    # Collect all broadcast calls
+    statuses = []
+    for call in mock_redis.publish.call_args_list:
+        payload = json.loads(call[0][1])
+        statuses.append(payload["status"])
+
+    # Should only contain frontend-compatible values
+    allowed = {"processing", "complete"}
+    assert all(s in allowed for s in statuses), f"Unexpected statuses: {statuses}"
