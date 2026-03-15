@@ -1,5 +1,6 @@
 import { Layout } from "./components/layout/Layout";
 import { LibraryPanel } from "./components/library/LibraryPanel";
+import { PipelinePanel } from "./components/pipeline/PipelinePanel";
 import { WaveformView } from "./components/visualizer/WaveformView";
 import { useWebSocket } from "./hooks/useWebSocket";
 
@@ -10,11 +11,7 @@ function App() {
     <Layout
       sidebar={<LibraryPanel />}
       main={<WaveformView />}
-      pipeline={
-        <div className="p-4">
-          <p className="text-xs text-neutral-500">Pipeline controls</p>
-        </div>
-      }
+      pipeline={<PipelinePanel />}
     />
   );
 }
