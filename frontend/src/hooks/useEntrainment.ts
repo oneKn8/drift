@@ -14,8 +14,8 @@ function interpWaypoints(waypoints: FreqWaypoint[], t: number): number {
   const ct = clamp(t, 0, 1);
   for (let i = 0; i < waypoints.length - 1; i++) {
     if (ct >= waypoints[i].time && ct <= waypoints[i + 1].time) {
-      const segT =
-        (ct - waypoints[i].time) / (waypoints[i + 1].time - waypoints[i].time);
+      const span = waypoints[i + 1].time - waypoints[i].time;
+      const segT = span > 0 ? (ct - waypoints[i].time) / span : 0;
       return lerp(waypoints[i].freq, waypoints[i + 1].freq, segT);
     }
   }
@@ -38,6 +38,9 @@ interface AudioNodes {
   entrainmentGain?: GainNode;
   bassBoost?: BiquadFilterNode;
   merger?: ChannelMergerNode;
+  musicEl?: HTMLAudioElement;
+  musicSource?: MediaElementAudioSourceNode;
+  musicGain?: GainNode;
 }
 
 export function useEntrainment() {
@@ -174,6 +177,37 @@ export function useEntrainment() {
     [createContext]
   );
 
+  const startMusic = useCallback(
+    (trackUrl: string) => {
+      const ctx = createContext();
+      const master = masterGainRef.current!;
+      const nodes = nodesRef.current;
+
+      const el = new Audio(trackUrl);
+      el.loop = true;
+      el.crossOrigin = "anonymous";
+      nodes.musicEl = el;
+
+      const source = ctx.createMediaElementSource(el);
+      nodes.musicSource = source;
+
+      const gain = ctx.createGain();
+      gain.gain.value = useSleepStore.getState().volumes.music;
+      nodes.musicGain = gain;
+
+      // If bass boost exists, route through it
+      if (nodes.bassBoost) {
+        source.connect(nodes.bassBoost);
+        nodes.bassBoost.connect(gain);
+      } else {
+        source.connect(gain);
+      }
+      gain.connect(master);
+      el.play().catch(() => {});
+    },
+    [createContext]
+  );
+
   const startBassBoost = useCallback(
     (mode: AudioMode) => {
       if (mode !== "speakers") return;
@@ -186,6 +220,7 @@ export function useEntrainment() {
       boost.gain.value = 6;
       boost.Q.value = 1;
       nodes.bassBoost = boost;
+      // Bass boost is connected when startMusic is called
     },
     [createContext]
   );
@@ -233,6 +268,10 @@ export function useEntrainment() {
       nodes.textureEl.pause();
       nodes.textureEl.src = "";
     }
+    if (nodes.musicEl) {
+      nodes.musicEl.pause();
+      nodes.musicEl.src = "";
+    }
 
     nodesRef.current = {};
 
@@ -251,6 +290,7 @@ export function useEntrainment() {
     if (nodes.entrainmentGain) nodes.entrainmentGain.gain.value = volumes.entrainment;
     if (nodes.noiseGain) nodes.noiseGain.gain.value = volumes.noise;
     if (nodes.textureGain) nodes.textureGain.gain.value = volumes.texture;
+    if (nodes.musicGain) nodes.musicGain.gain.value = volumes.music;
   }, [volumes]);
 
   useEffect(() => {
@@ -261,6 +301,7 @@ export function useEntrainment() {
     startEntrainment,
     startNoise,
     startTexture,
+    startMusic,
     startBassBoost,
     startFrequencyRamp,
     updateFrequency,

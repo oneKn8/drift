@@ -8,7 +8,7 @@ import { SleepActive } from "./SleepActive";
 import { useUIStore } from "../../stores/ui";
 
 export function SleepView() {
-  const { phase, setPhase, preset, audioMode, noiseType, texture, customStartFreq, customEndFreq } =
+  const { phase, setPhase, preset, audioMode, noiseType, texture, trackId, customStartFreq, customEndFreq } =
     useSleepStore();
 
   const entrainment = useEntrainment();
@@ -41,9 +41,24 @@ export function SleepView() {
       entrainment.startTexture(texture);
     }
 
+    // Start music track if selected
+    if (trackId) {
+      const store = useSleepStore.getState();
+      // Try enhanced (mastered) version first, fall back to original upload
+      const masteredUrl = `/audio/enhanced/${trackId}/master/mastered.wav`;
+      const uploadUrl = `/audio/uploads/${trackId}.mp3`;
+      fetch(masteredUrl, { method: "HEAD" })
+        .then((res) => {
+          entrainment.startMusic(res.ok ? masteredUrl : uploadUrl);
+        })
+        .catch(() => {
+          entrainment.startMusic(uploadUrl);
+        });
+    }
+
     entrainment.startFrequencyRamp(waypoints, durationMs);
     timer.startTimer();
-  }, [preset, audioMode, noiseType, texture, customStartFreq, customEndFreq, entrainment, timer, setPhase]);
+  }, [preset, audioMode, noiseType, texture, trackId, customStartFreq, customEndFreq, entrainment, timer, setPhase]);
 
   const handleStop = useCallback(() => {
     entrainment.stopAll();

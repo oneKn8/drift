@@ -107,5 +107,5 @@ export const useSleepStore = create<SleepState>()((set) => ({
     set({ customStartFreq: start, customEndFreq: end }),
   setCurrentFreq: (freq) => set({ currentFreq: freq }),
   setTimerRemaining: (seconds) => set({ timerRemaining: seconds }),
-  reset: () => set({ ...defaults }),
+  reset: () => set({ ...defaults, volumes: { ...defaults.volumes } }),
 }));

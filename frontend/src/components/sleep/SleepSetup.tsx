@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useSleepStore, PRESETS } from "../../stores/sleep";
 import type { SleepPreset, AudioMode, NoiseType } from "../../stores/sleep";
 import { useLibraryStore } from "../../stores/library";
+import { fetchTextures } from "../../hooks/useApi";
 
 interface SleepSetupProps {
   onEnterSleep: () => void;
@@ -28,8 +29,7 @@ export function SleepSetup({ onEnterSleep }: SleepSetupProps) {
   const [textures, setTextures] = useState<{ name: string; path: string }[]>([]);
 
   useEffect(() => {
-    fetch("/api/textures")
-      .then((r) => r.json())
+    fetchTextures()
       .then((data) => setTextures(data.textures ?? []))
       .catch(() => {});
   }, []);
