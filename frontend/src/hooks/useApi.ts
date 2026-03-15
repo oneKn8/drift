@@ -89,3 +89,9 @@ export async function getMixStatus(mixId: string) {
   if (!res.ok) throw new Error("Mix status not found");
   return res.json();
 }
+
+export async function fetchTextures() {
+  const res = await fetch(`${API_BASE}/textures`);
+  if (!res.ok) throw new Error("Failed to fetch textures");
+  return res.json();
+}

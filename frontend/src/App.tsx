@@ -4,6 +4,7 @@ import { PipelinePanel } from "./components/pipeline/PipelinePanel";
 import { WaveformView } from "./components/visualizer/WaveformView";
 import { Timeline } from "./components/timeline/Timeline";
 import { ArrangeControls } from "./components/timeline/ArrangeControls";
+import { SleepView } from "./components/sleep/SleepView";
 import { useWebSocket } from "./hooks/useWebSocket";
 
 function App() {
@@ -16,6 +17,7 @@ function App() {
       pipeline={<PipelinePanel />}
       timeline={<Timeline />}
       arrangeControls={<ArrangeControls />}
+      sleep={<SleepView />}
     />
   );
 }

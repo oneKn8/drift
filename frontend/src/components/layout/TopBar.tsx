@@ -38,6 +38,16 @@ export function TopBar({ onToggleLibrary, onTogglePipeline }: TopBarProps) {
         >
           Timeline
         </button>
+        <button
+          onClick={() => setMainView("sleep")}
+          className={`px-3 py-1.5 text-xs font-medium rounded transition-colors ${
+            mainView === "sleep"
+              ? "bg-neutral-800 text-neutral-100"
+              : "text-neutral-500 hover:text-neutral-300"
+          }`}
+        >
+          Sleep
+        </button>
       </div>
 
       <div className="flex items-center gap-2">

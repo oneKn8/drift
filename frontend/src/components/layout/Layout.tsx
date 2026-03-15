@@ -8,14 +8,16 @@ interface LayoutProps {
   pipeline?: React.ReactNode;
   timeline?: React.ReactNode;
   arrangeControls?: React.ReactNode;
+  sleep?: React.ReactNode;
 }
 
-export function Layout({ sidebar, main, pipeline, timeline, arrangeControls }: LayoutProps) {
+export function Layout({ sidebar, main, pipeline, timeline, arrangeControls, sleep }: LayoutProps) {
   const { mainView, openPanels, togglePanel } = useUIStore();
   const showLibrary = openPanels.has("library");
   const showPipeline = openPanels.has("pipeline");
 
   const isTimeline = mainView === "timeline";
+  const isSleep = mainView === "sleep";
 
   return (
     <div className="h-screen flex flex-col bg-neutral-950 text-neutral-100 overflow-hidden">
@@ -33,10 +35,10 @@ export function Layout({ sidebar, main, pipeline, timeline, arrangeControls }: L
 
         <main className="flex-1 flex flex-col min-w-0">
           <div className="flex-1 min-h-0">
-            {isTimeline ? timeline : main}
+            {isSleep ? sleep : isTimeline ? timeline : main}
           </div>
 
-          {showPipeline && !isTimeline && pipeline && (
+          {showPipeline && !isTimeline && !isSleep && pipeline && (
             <div className="border-t border-neutral-800 h-48 flex-shrink-0 overflow-y-auto">
               {pipeline}
             </div>

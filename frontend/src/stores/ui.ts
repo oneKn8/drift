@@ -1,6 +1,6 @@
 import { create } from "zustand";
 
-type MainView = "waveform" | "timeline";
+type MainView = "waveform" | "timeline" | "sleep";
 type Panel = "library" | "pipeline";
 
 interface UIState {
