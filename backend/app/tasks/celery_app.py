@@ -5,6 +5,7 @@ celery_app = Celery(
     "audio_engine",
     broker=REDIS_URL,
     backend=REDIS_URL,
+    include=["app.tasks.pipeline"],
 )
 
 celery_app.conf.update(
@@ -16,8 +17,6 @@ celery_app.conf.update(
     task_track_started=True,
     result_expires=3600,
 )
-
-celery_app.autodiscover_tasks(["app.tasks"])
 
 
 @celery_app.task
