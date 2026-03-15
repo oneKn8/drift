@@ -1,19 +1,19 @@
 import { create } from "zustand";
 
-type View = "studio" | "sleep";
+type MainView = "waveform" | "timeline";
 type Panel = "library" | "pipeline";
 
 interface UIState {
-  view: View;
+  mainView: MainView;
   openPanels: Set<Panel>;
-  setView: (view: View) => void;
+  setMainView: (view: MainView) => void;
   togglePanel: (panel: Panel) => void;
 }
 
 export const useUIStore = create<UIState>((set) => ({
-  view: "studio",
+  mainView: "waveform",
   openPanels: new Set<Panel>(["library"]),
-  setView: (view) => set({ view }),
+  setMainView: (view) => set({ mainView: view }),
   togglePanel: (panel) =>
     set((state) => {
       const next = new Set(state.openPanels);
