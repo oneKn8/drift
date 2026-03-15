@@ -9,8 +9,9 @@ from pathlib import Path
 from typing import Any
 
 import redis
-from celery import shared_task
 from loguru import logger
+
+from app.tasks.celery_app import celery_app
 
 from app.config import PIPELINE_DIR, PIPELINE_STAGES, UPLOAD_DIR, REDIS_URL
 
@@ -121,7 +122,7 @@ def _run_master(
 VALID_STAGES = {"denoise", "separate", "super_resolution", "master"}
 
 
-@shared_task(bind=True)
+@celery_app.task(bind=True)
 def run_pipeline(
     self,
     track_id: str,
