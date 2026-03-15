@@ -2,6 +2,8 @@ import { Layout } from "./components/layout/Layout";
 import { LibraryPanel } from "./components/library/LibraryPanel";
 import { PipelinePanel } from "./components/pipeline/PipelinePanel";
 import { WaveformView } from "./components/visualizer/WaveformView";
+import { Timeline } from "./components/timeline/Timeline";
+import { ArrangeControls } from "./components/timeline/ArrangeControls";
 import { useWebSocket } from "./hooks/useWebSocket";
 
 function App() {
@@ -12,6 +14,8 @@ function App() {
       sidebar={<LibraryPanel />}
       main={<WaveformView />}
       pipeline={<PipelinePanel />}
+      timeline={<Timeline />}
+      arrangeControls={<ArrangeControls />}
     />
   );
 }
