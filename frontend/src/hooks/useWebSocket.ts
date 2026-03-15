@@ -9,7 +9,7 @@ type WSMessage = {
 export function useWebSocket() {
   const wsRef = useRef<WebSocket | null>(null);
   const reconnectTimeout = useRef<ReturnType<typeof setTimeout>>(undefined);
-  const { setStageStatus } = usePipelineStore();
+  const { setStageStatus, markTrackComplete } = usePipelineStore();
 
   const connect = useCallback(() => {
     const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
@@ -31,6 +31,13 @@ export function useWebSocket() {
           status as "idle" | "processing" | "complete" | "error",
           progress
         );
+
+        if (stage === "pipeline" && status === "complete") {
+          const trackId = data.track_id as string | undefined;
+          if (trackId) {
+            markTrackComplete(trackId);
+          }
+        }
       }
     };
 
@@ -43,7 +50,7 @@ export function useWebSocket() {
     };
 
     wsRef.current = ws;
-  }, [setStageStatus]);
+  }, [setStageStatus, markTrackComplete]);
 
   useEffect(() => {
     connect();

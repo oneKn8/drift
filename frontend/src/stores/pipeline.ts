@@ -11,9 +11,12 @@ interface PipelineStage {
 
 interface PipelineState {
   stages: PipelineStage[];
+  completedTracks: Set<string>;
   setStageStatus: (name: string, status: ProcessingStatus, progress?: number) => void;
   setStageModel: (name: string, model: string) => void;
   resetPipeline: () => void;
+  markTrackComplete: (trackId: string) => void;
+  isTrackComplete: (trackId: string) => boolean;
 }
 
 const defaultStages: PipelineStage[] = [
@@ -24,8 +27,9 @@ const defaultStages: PipelineStage[] = [
   { name: "mastering", model: "matchering", status: "idle", progress: 0 },
 ];
 
-export const usePipelineStore = create<PipelineState>((set) => ({
+export const usePipelineStore = create<PipelineState>((set, get) => ({
   stages: [...defaultStages],
+  completedTracks: new Set<string>(),
   setStageStatus: (name, status, progress) =>
     set((state) => ({
       stages: state.stages.map((s) =>
@@ -39,4 +43,11 @@ export const usePipelineStore = create<PipelineState>((set) => ({
       ),
     })),
   resetPipeline: () => set({ stages: [...defaultStages] }),
+  markTrackComplete: (trackId) =>
+    set((state) => {
+      const next = new Set(state.completedTracks);
+      next.add(trackId);
+      return { completedTracks: next };
+    }),
+  isTrackComplete: (trackId) => get().completedTracks.has(trackId),
 }));

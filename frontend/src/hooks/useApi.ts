@@ -25,3 +25,23 @@ export async function deleteTrack(id: string) {
   if (!res.ok) throw new Error("Failed to delete track");
   return res.json();
 }
+
+export async function runPipeline(
+  trackId: string,
+  stages?: string[],
+  models?: Record<string, string>
+) {
+  const res = await fetch(`${API_BASE}/pipeline/run`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ track_id: trackId, stages, models }),
+  });
+  if (!res.ok) throw new Error("Failed to start pipeline");
+  return res.json();
+}
+
+export async function getPipelineStatus(trackId: string) {
+  const res = await fetch(`${API_BASE}/pipeline/status/${trackId}`);
+  if (!res.ok) throw new Error("Pipeline status not found");
+  return res.json();
+}
