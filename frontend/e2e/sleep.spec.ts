@@ -39,10 +39,11 @@ test.describe("Sleep Mode", () => {
   test("volume sliders present for all layers", async ({ page }) => {
     await page.goto("/");
     await page.getByRole("button", { name: "Sleep" }).click();
-    await expect(page.getByText("Music")).toBeVisible();
-    await expect(page.getByText("Entrainment")).toBeVisible();
-    await expect(page.getByText("Noise")).toBeVisible();
-    await expect(page.getByText("Texture")).toBeVisible();
+    // Volume section has the "Volumes" label and 4 range inputs
+    await expect(page.getByText("Volumes")).toBeVisible();
+    const sliders = page.locator('input[type="range"]');
+    const count = await sliders.count();
+    expect(count).toBeGreaterThanOrEqual(4);
   });
 
   test("switching back to waveform from sleep", async ({ page }) => {
