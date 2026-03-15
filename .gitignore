@@ -11,12 +11,14 @@ venv/
 node_modules/
 dist/
 
-# Data
+# Data (user files, not tracked)
 data/uploads/*
 data/stems/*
 data/enhanced/*
 data/exports/*
 data/models/*
+data/arrangements/*
+data/textures/*
 data/rl/*
 !data/*/.gitkeep
 
@@ -32,6 +34,17 @@ data/rl/*
 .env
 .env.local
 
+# Test artifacts
+test-results/
+.playwright-mcp/
+playwright-report/
+
+# Audio files in project root (user samples)
+*.mp3
+*.wav
+*.flac
+
 # Research docs (not part of app)
 research-*.md
 docs/research/
+docs/mockups/
