@@ -1,10 +1,9 @@
 """API routes for arrangement, loop detection, and mix rendering."""
 
-import json
-from typing import Optional
+from typing import Literal
 
 from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from app.config import UPLOAD_DIR, ARRANGEMENTS_DIR, EXPORTS_DIR
 
@@ -17,14 +16,15 @@ class ArrangeRequest(BaseModel):
 
 class MixRenderRequest(BaseModel):
     arrangement_id: str
-    format: str = "FLAC"
-    sample_rate: int = 48000
-    bit_depth: int = 24
-    lufs_target: float = -14.0
+    format: Literal["FLAC", "WAV"] = "FLAC"
+    sample_rate: Literal[44100, 48000, 96000] = 48000
+    bit_depth: Literal[16, 24] = 24
+    lufs_target: float = Field(default=-14.0, ge=-20.0, le=-8.0)
 
 
 @router.post("/arrange")
-async def arrange_tracks(request: ArrangeRequest):
+def arrange_tracks(request: ArrangeRequest):
+    """Auto-arrange tracks. Runs in thread pool (sync def)."""
     from app.services.arrangement import auto_arrange
 
     if not request.track_ids:
@@ -39,7 +39,8 @@ async def arrange_tracks(request: ArrangeRequest):
 
 
 @router.post("/loop/{track_id}")
-async def detect_loop_endpoint(track_id: str):
+def detect_loop_endpoint(track_id: str):
+    """Detect loop points. Runs in thread pool (sync def) to avoid blocking event loop."""
     from app.services.loop_detect import detect_loop
 
     meta_path = UPLOAD_DIR / ".meta" / f"{track_id}.json"
