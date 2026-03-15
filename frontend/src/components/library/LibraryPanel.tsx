@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useLibraryStore } from "../../stores/library";
+import { useToastStore } from "../../stores/toast";
 import { TrackCard } from "./TrackCard";
 import { UploadZone } from "./UploadZone";
 import { fetchTracks, uploadTrack, deleteTrack } from "../../hooks/useApi";
@@ -23,7 +24,11 @@ export function LibraryPanel() {
       try {
         const track = await uploadTrack(file);
         addTrack(track);
+        useToastStore.getState().addToast("success", "Track uploaded");
       } catch (err) {
+        const message =
+          err instanceof Error ? err.message : "Unknown error";
+        useToastStore.getState().addToast("error", "Upload failed: " + message);
         console.error("Upload failed:", err);
       }
     }

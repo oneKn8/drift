@@ -1,6 +1,7 @@
 import { useEffect, useRef, useCallback } from "react";
 import { usePipelineStore } from "../stores/pipeline";
 import { useArrangementStore } from "../stores/arrangement";
+import { useToastStore } from "../stores/toast";
 
 type WSMessage = {
   type: string;
@@ -32,6 +33,7 @@ export function useWebSocket() {
         if (stage === "mix_render") {
           if (status === "complete") {
             setRenderStatus("complete");
+            useToastStore.getState().addToast("success", "Mix rendered");
           } else if (status === "processing") {
             setRenderStatus("rendering");
           }
@@ -47,6 +49,7 @@ export function useWebSocket() {
             if (trackId) {
               markTrackComplete(trackId);
             }
+            useToastStore.getState().addToast("success", "Enhancement complete");
           }
         }
       }
