@@ -49,11 +49,11 @@ test.describe("Foundation", () => {
     ]);
     await fileChooser.setFiles(SAMPLE_MP3);
 
-    await expect(page.getByText("Nebula_Drift.mp3")).toBeVisible({
+    await expect(page.getByText("Nebula_Drift.mp3").first()).toBeVisible({
       timeout: 30000,
     });
 
-    await expect(page.getByText(/bpm/)).toBeVisible();
+    await expect(page.getByText(/bpm/).first()).toBeVisible();
   });
 
   test("click track to play and see waveform area", async ({ page }) => {
@@ -65,11 +65,11 @@ test.describe("Foundation", () => {
       uploadZone.click(),
     ]);
     await fileChooser.setFiles(SAMPLE_MP3);
-    await expect(page.getByText("Nebula_Drift.mp3")).toBeVisible({
+    await expect(page.getByText("Nebula_Drift.mp3").first()).toBeVisible({
       timeout: 30000,
     });
 
-    await page.getByText("Nebula_Drift.mp3").click();
+    await page.getByText("Nebula_Drift.mp3").first().click();
 
     // After clicking a track, the placeholder text should disappear
     await expect(
@@ -118,15 +118,15 @@ test.describe("Foundation", () => {
     await expect(pipelineBtn).toBeVisible();
 
     // Pipeline is closed by default
-    await expect(page.getByText("Pipeline controls")).not.toBeVisible();
+    await expect(page.getByText("Enhance")).not.toBeVisible();
 
     // Open pipeline
     await pipelineBtn.click();
-    await expect(page.getByText("Pipeline controls")).toBeVisible();
+    await expect(page.getByText("Enhance")).toBeVisible();
 
     // Close pipeline
     await pipelineBtn.click();
-    await expect(page.getByText("Pipeline controls")).not.toBeVisible();
+    await expect(page.getByText("Enhance")).not.toBeVisible();
   });
 
   test("API health check", async ({ request }) => {
