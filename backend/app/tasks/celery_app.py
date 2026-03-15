@@ -17,6 +17,8 @@ celery_app.conf.update(
     result_expires=3600,
 )
 
+celery_app.autodiscover_tasks(["app.tasks"])
+
 
 @celery_app.task
 def ping():
