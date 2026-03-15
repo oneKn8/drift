@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from app.config import UPLOAD_DIR, ENHANCED_DIR, EXPORTS_DIR
 from app.routes.library import router as library_router
+from app.routes.ws import router as ws_router
 
 app = FastAPI(title="Audio Engine")
 
@@ -15,6 +16,7 @@ app.add_middleware(
 )
 
 app.include_router(library_router)
+app.include_router(ws_router)
 
 app.mount("/audio/uploads", StaticFiles(directory=str(UPLOAD_DIR)), name="uploads")
 app.mount("/audio/enhanced", StaticFiles(directory=str(ENHANCED_DIR)), name="enhanced")
