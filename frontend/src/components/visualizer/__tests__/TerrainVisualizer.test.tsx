@@ -28,11 +28,10 @@ function createMockGLContext() {
     clearColor: vi.fn(),
     getUniformLocation: vi.fn(() => ({})),
     clear: vi.fn(),
-    uniform1fv: vi.fn(),
     uniform1f: vi.fn(),
-    uniform2f: vi.fn(),
     drawElements: vi.fn(),
     viewport: vi.fn(),
+    bufferSubData: vi.fn(),
     getExtension: vi.fn(() => ({ loseContext: vi.fn() })),
     canvas: {},
     VERTEX_SHADER: 0x8b31,
@@ -42,6 +41,7 @@ function createMockGLContext() {
     ARRAY_BUFFER: 0x8892,
     ELEMENT_ARRAY_BUFFER: 0x8893,
     STATIC_DRAW: 0x88e4,
+    DYNAMIC_DRAW: 0x88e8,
     FLOAT: 0x1406,
     BLEND: 0x0be2,
     SRC_ALPHA: 0x0302,
@@ -138,9 +138,9 @@ describe("TerrainVisualizer", () => {
 
   it("uploads grid geometry buffers", () => {
     render(<TerrainVisualizer analyserNode={null} />);
-    // VBO + IBO
-    expect(mockGL.createBuffer).toHaveBeenCalledTimes(2);
-    expect(mockGL.bufferData).toHaveBeenCalledTimes(2);
+    // VBO + IBO + FFT attribute buffer
+    expect(mockGL.createBuffer).toHaveBeenCalledTimes(3);
+    expect(mockGL.bufferData).toHaveBeenCalledTimes(3);
   });
 
   it("starts animation frame loop on mount", () => {
@@ -148,13 +148,12 @@ describe("TerrainVisualizer", () => {
     expect(window.requestAnimationFrame).toHaveBeenCalled();
   });
 
-  it("sets uniforms during render frame", () => {
+  it("sets uniforms and uploads FFT attribute during render frame", () => {
     render(<TerrainVisualizer analyserNode={null} />);
     flushOneFrame();
-    // uFFT, uTime, uResolution, uHasData
-    expect(mockGL.uniform1fv).toHaveBeenCalled();
+    // FFT attribute buffer update + uTime + uHasData
+    expect(mockGL.bufferSubData).toHaveBeenCalled();
     expect(mockGL.uniform1f).toHaveBeenCalled();
-    expect(mockGL.uniform2f).toHaveBeenCalled();
   });
 
   it("draws elements with correct primitive type", () => {

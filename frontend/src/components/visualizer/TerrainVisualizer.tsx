@@ -1,11 +1,12 @@
 import { useEffect, useRef, useCallback } from "react";
 
 // --- GLSL Shaders ---
+// FFT data passed via per-vertex attribute (avoids WebGL 1 limitations with
+// dynamic uniform indexing and vertex texture lookups)
 const VERT_SRC = `
   attribute vec2 aPosition;
-  uniform float uFFT[128];
+  attribute float aFFT;
   uniform float uTime;
-  uniform vec2 uResolution;
   uniform float uHasData;
 
   varying float vHeight;
@@ -14,31 +15,26 @@ const VERT_SRC = `
     float col = aPosition.x;
     float row = aPosition.y;
 
-    // Frequency magnitude from FFT (0-1 range)
-    int idx = int(col);
-    float mag = uFFT[idx];
-
     // Idle animation when no audio data
     float idle = sin(col * 0.08 + uTime * 0.5) * 0.15
                + sin(col * 0.03 - uTime * 0.3) * 0.1
                + sin(row * 0.12 + uTime * 0.4) * 0.08;
 
-    float height = mix(idle, mag, uHasData);
+    float height = mix(idle, aFFT, uHasData);
     vHeight = height;
 
-    // Map to NDC: x from -1 to 1, z (depth) from rows
+    // Map to NDC
     float x = (col / 128.0) * 2.0 - 1.0;
     float z = (row / 48.0) * 2.0 - 1.0;
     float y = height * 0.6;
 
-    // Simple perspective tilt (rotate around X axis by ~25 degrees)
-    float tilt = 0.42; // ~24 degrees in radians
+    // Perspective tilt (~24 degrees)
+    float tilt = 0.42;
     float cosT = cos(tilt);
     float sinT = sin(tilt);
     float newY = y * cosT - z * sinT;
     float newZ = y * sinT + z * cosT;
 
-    // Perspective division
     float perspective = 1.0 / (2.5 - newZ * 0.5);
     gl_Position = vec4(x * perspective, newY * perspective, newZ * 0.1, 1.0);
   }
@@ -131,10 +127,10 @@ interface GLState {
   gl: WebGLRenderingContext;
   program: WebGLProgram;
   indexCount: number;
+  fftBuffer: WebGLBuffer;
+  aFFTLocation: number;
   uniforms: {
-    uFFT: WebGLUniformLocation | null;
     uTime: WebGLUniformLocation | null;
-    uResolution: WebGLUniformLocation | null;
     uHasData: WebGLUniformLocation | null;
   };
 }
@@ -185,11 +181,23 @@ export function TerrainVisualizer({ analyserNode }: TerrainVisualizerProps) {
       gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
       gl.clearColor(0.039, 0.039, 0.039, 1.0); // neutral-950
 
+      // Create FFT attribute buffer (one float per vertex, updated each frame)
+      const fftBuffer = gl.createBuffer()!;
+      const fftInitData = new Float32Array(GRID_COLS * GRID_ROWS);
+      gl.bindBuffer(gl.ARRAY_BUFFER, fftBuffer);
+      gl.bufferData(gl.ARRAY_BUFFER, fftInitData, gl.DYNAMIC_DRAW);
+
+      const aFFTLocation = gl.getAttribLocation(program, "aFFT");
+      gl.enableVertexAttribArray(aFFTLocation);
+      gl.vertexAttribPointer(aFFTLocation, 1, gl.FLOAT, false, 0, 0);
+
+      // Re-bind position buffer for position attribute
+      gl.bindBuffer(gl.ARRAY_BUFFER, vbo);
+      gl.vertexAttribPointer(aPos, 2, gl.FLOAT, false, 0, 0);
+
       // Cache uniform locations
       const uniforms = {
-        uFFT: gl.getUniformLocation(program, "uFFT"),
         uTime: gl.getUniformLocation(program, "uTime"),
-        uResolution: gl.getUniformLocation(program, "uResolution"),
         uHasData: gl.getUniformLocation(program, "uHasData"),
       };
 
@@ -197,6 +205,8 @@ export function TerrainVisualizer({ analyserNode }: TerrainVisualizerProps) {
         gl,
         program,
         indexCount: indices.length,
+        fftBuffer,
+        aFFTLocation,
         uniforms,
       };
 
@@ -213,8 +223,10 @@ export function TerrainVisualizer({ analyserNode }: TerrainVisualizerProps) {
     const state = initGL(canvas);
     if (!state) return;
 
-    const { gl, program, indexCount, uniforms } = state;
+    const { gl, program, indexCount, fftBuffer, aFFTLocation, uniforms } = state;
     const fftData = new Uint8Array(GRID_COLS);
+    // Per-vertex FFT data: each row repeats the column's FFT value
+    const vertexFFT = new Float32Array(GRID_COLS * GRID_ROWS);
 
     const render = () => {
       if (!gl.canvas) return;
@@ -247,16 +259,26 @@ export function TerrainVisualizer({ analyserNode }: TerrainVisualizerProps) {
           (fftRef.current[i] - smoothFFTRef.current[i]) * 0.15;
       }
 
+      // Expand smoothed FFT to per-vertex data (each row gets same column value)
+      for (let r = 0; r < GRID_ROWS; r++) {
+        for (let c = 0; c < GRID_COLS; c++) {
+          vertexFFT[r * GRID_COLS + c] = smoothFFTRef.current[c];
+        }
+      }
+
+      // Upload FFT attribute data
+      gl.bindBuffer(gl.ARRAY_BUFFER, fftBuffer);
+      gl.bufferSubData(gl.ARRAY_BUFFER, 0, vertexFFT);
+      gl.vertexAttribPointer(aFFTLocation, 1, gl.FLOAT, false, 0, 0);
+
       gl.clear(gl.COLOR_BUFFER_BIT);
       gl.useProgram(program);
 
       // Set uniforms
-      gl.uniform1fv(uniforms.uFFT, smoothFFTRef.current);
       gl.uniform1f(
         uniforms.uTime,
         (performance.now() - startTimeRef.current) / 1000,
       );
-      gl.uniform2f(uniforms.uResolution, canvas.width, canvas.height);
       gl.uniform1f(uniforms.uHasData, hasData);
 
       gl.drawElements(gl.TRIANGLES, indexCount, gl.UNSIGNED_SHORT, 0);
