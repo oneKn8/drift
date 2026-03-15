@@ -1,3 +1,4 @@
+import { motion } from "framer-motion";
 import { useUIStore } from "../../stores/ui";
 
 interface TopBarProps {
@@ -18,7 +19,8 @@ export function TopBar({ onToggleLibrary, onTogglePipeline }: TopBarProps) {
       </div>
 
       <div className="flex items-center gap-1">
-        <button
+        <motion.button
+          whileTap={{ scale: 0.95 }}
           onClick={() => setMainView("waveform")}
           className={`px-3 py-1.5 text-xs font-medium rounded transition-colors ${
             mainView === "waveform"
@@ -27,8 +29,9 @@ export function TopBar({ onToggleLibrary, onTogglePipeline }: TopBarProps) {
           }`}
         >
           Waveform
-        </button>
-        <button
+        </motion.button>
+        <motion.button
+          whileTap={{ scale: 0.95 }}
           onClick={() => setMainView("timeline")}
           className={`px-3 py-1.5 text-xs font-medium rounded transition-colors ${
             mainView === "timeline"
@@ -37,8 +40,9 @@ export function TopBar({ onToggleLibrary, onTogglePipeline }: TopBarProps) {
           }`}
         >
           Timeline
-        </button>
-        <button
+        </motion.button>
+        <motion.button
+          whileTap={{ scale: 0.95 }}
           onClick={() => setMainView("sleep")}
           className={`px-3 py-1.5 text-xs font-medium rounded transition-colors ${
             mainView === "sleep"
@@ -47,7 +51,7 @@ export function TopBar({ onToggleLibrary, onTogglePipeline }: TopBarProps) {
           }`}
         >
           Sleep
-        </button>
+        </motion.button>
       </div>
 
       <div className="flex items-center gap-2">

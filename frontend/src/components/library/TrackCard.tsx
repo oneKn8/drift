@@ -1,3 +1,4 @@
+import { motion } from "framer-motion";
 import type { Track } from "../../stores/library";
 import { usePlaybackStore } from "../../stores/playback";
 
@@ -17,7 +18,9 @@ export function TrackCard({ track, onDelete }: TrackCardProps) {
   };
 
   return (
-    <div
+    <motion.div
+      whileHover={{ y: -1, transition: { duration: 0.15 } }}
+      whileTap={{ scale: 0.98 }}
       className={`group px-3 py-2.5 border-b border-neutral-800/50 cursor-pointer transition-colors ${
         isActive ? "bg-neutral-800/50" : "hover:bg-neutral-900"
       }`}
@@ -59,6 +62,6 @@ export function TrackCard({ track, onDelete }: TrackCardProps) {
           </button>
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 }

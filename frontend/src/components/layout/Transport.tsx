@@ -1,3 +1,4 @@
+import { motion } from "framer-motion";
 import { usePlaybackStore } from "../../stores/playback";
 
 export function Transport() {
@@ -13,7 +14,8 @@ export function Transport() {
   return (
     <div className="h-14 border-t border-neutral-800 flex items-center justify-between px-4 flex-shrink-0">
       <div className="flex items-center gap-3">
-        <button
+        <motion.button
+          whileTap={{ scale: 0.9 }}
           onClick={togglePlay}
           className="w-8 h-8 flex items-center justify-center rounded-full border border-neutral-700 hover:border-neutral-500 transition-colors"
           aria-label={isPlaying ? "Pause" : "Play"}
@@ -28,7 +30,7 @@ export function Transport() {
               <path d="M3 1.5v9l7.5-4.5z" />
             </svg>
           )}
-        </button>
+        </motion.button>
 
         <span className="text-xs font-mono text-neutral-500 w-24">
           {formatTime(currentTime)} / {formatTime(duration)}

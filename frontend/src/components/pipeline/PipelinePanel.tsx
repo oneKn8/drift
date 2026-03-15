@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { motion } from "framer-motion";
 import { usePipelineStore } from "../../stores/pipeline";
 import { usePlaybackStore } from "../../stores/playback";
 import { runPipeline } from "../../hooks/useApi";
@@ -59,13 +60,14 @@ export function PipelinePanel() {
           ))}
         </div>
 
-        <button
+        <motion.button
+          whileTap={{ scale: 0.95 }}
           onClick={handleEnhance}
           disabled={!currentTrackId || isProcessing}
           className="px-4 py-2 text-sm font-medium rounded bg-neutral-100 text-neutral-950 hover:bg-neutral-200 disabled:opacity-40 disabled:cursor-not-allowed transition-colors flex-shrink-0 self-center"
         >
           {isProcessing ? "Processing..." : "Enhance"}
-        </button>
+        </motion.button>
       </div>
 
       {error && (
