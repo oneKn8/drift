@@ -2,12 +2,14 @@ import { useEffect, useRef, useCallback } from "react";
 import WaveSurfer from "wavesurfer.js";
 import { usePlaybackStore } from "../stores/playback";
 import { useLibraryStore } from "../stores/library";
+import { usePipelineStore } from "../stores/pipeline";
 
 export function useAudioPlayer(containerRef: React.RefObject<HTMLDivElement | null>) {
   const wsRef = useRef<WaveSurfer | null>(null);
-  const { isPlaying, currentTrackId, volume, setCurrentTime, setDuration, pause } =
+  const { isPlaying, currentTrackId, volume, abMode, setCurrentTime, setDuration, pause } =
     usePlaybackStore();
   const { tracks } = useLibraryStore();
+  const { isTrackComplete } = usePipelineStore();
 
   const currentTrack = tracks.find((t) => t.id === currentTrackId);
 
@@ -42,9 +44,38 @@ export function useAudioPlayer(containerRef: React.RefObject<HTMLDivElement | nu
 
   useEffect(() => {
     if (!wsRef.current || !currentTrack) return;
-    const url = `/audio/uploads/${currentTrack.file_path}`;
+
+    let url: string;
+
+    if (abMode === "processed" && currentTrack.id && isTrackComplete(currentTrack.id)) {
+      // Try mastered first, fall back to denoised, then original
+      const masteredUrl = `/audio/enhanced/${currentTrack.id}/master/mastered.wav`;
+      const denoisedUrl = `/audio/enhanced/${currentTrack.id}/denoise/denoised.wav`;
+
+      const ws = wsRef.current;
+      fetch(masteredUrl, { method: "HEAD" })
+        .then((res) => {
+          if (res.ok) {
+            ws.load(masteredUrl);
+          } else {
+            return fetch(denoisedUrl, { method: "HEAD" }).then((res2) => {
+              if (res2.ok) {
+                ws.load(denoisedUrl);
+              } else {
+                ws.load(`/audio/uploads/${currentTrack.file_path}`);
+              }
+            });
+          }
+        })
+        .catch(() => {
+          ws.load(`/audio/uploads/${currentTrack.file_path}`);
+        });
+      return;
+    }
+
+    url = `/audio/uploads/${currentTrack.file_path}`;
     wsRef.current.load(url);
-  }, [currentTrack]);
+  }, [currentTrack, abMode, isTrackComplete]);
 
   useEffect(() => {
     if (!wsRef.current) return;
