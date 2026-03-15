@@ -6,10 +6,11 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from loguru import logger
 
-from app.config import UPLOAD_DIR, ENHANCED_DIR, EXPORTS_DIR
+from app.config import UPLOAD_DIR, ENHANCED_DIR, EXPORTS_DIR, TEXTURES_DIR
 from app.routes.arrange import router as arrange_router
 from app.routes.library import router as library_router
 from app.routes.pipeline import router as pipeline_router
+from app.routes.textures import router as textures_router
 from app.routes.ws import redis_pipeline_listener, router as ws_router
 
 
@@ -40,11 +41,13 @@ app.add_middleware(
 app.include_router(arrange_router)
 app.include_router(library_router)
 app.include_router(pipeline_router)
+app.include_router(textures_router)
 app.include_router(ws_router)
 
 app.mount("/audio/uploads", StaticFiles(directory=str(UPLOAD_DIR)), name="uploads")
 app.mount("/audio/enhanced", StaticFiles(directory=str(ENHANCED_DIR)), name="enhanced")
 app.mount("/audio/exports", StaticFiles(directory=str(EXPORTS_DIR)), name="exports")
+app.mount("/audio/textures", StaticFiles(directory=str(TEXTURES_DIR)), name="textures")
 
 
 @app.get("/api/health")

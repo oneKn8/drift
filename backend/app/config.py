@@ -10,6 +10,7 @@ MODELS_DIR = DATA_DIR / "models"
 
 PIPELINE_DIR = DATA_DIR / "enhanced"
 ARRANGEMENTS_DIR = DATA_DIR / "arrangements"
+TEXTURES_DIR = DATA_DIR / "textures"
 
 ALLOWED_EXTENSIONS = {".mp3", ".wav", ".flac", ".ogg", ".m4a", ".aac", ".alac"}
 MAX_UPLOAD_SIZE = 500 * 1024 * 1024  # 500MB
@@ -23,5 +24,5 @@ SEPARATION_MODELS = {"htdemucs": "htdemucs", "htdemucs_ft": "htdemucs_ft"}
 SR_MODELS = {"flashsr": "FlashSR (ONNX)"}
 MASTER_MODELS = {"matchering": "Matchering"}
 
-for d in [UPLOAD_DIR, STEMS_DIR, ENHANCED_DIR, EXPORTS_DIR, MODELS_DIR, PIPELINE_DIR, ARRANGEMENTS_DIR]:
+for d in [UPLOAD_DIR, STEMS_DIR, ENHANCED_DIR, EXPORTS_DIR, MODELS_DIR, PIPELINE_DIR, ARRANGEMENTS_DIR, TEXTURES_DIR]:
     d.mkdir(parents=True, exist_ok=True)
