@@ -4,6 +4,7 @@ import { usePipelineStore } from "../../stores/pipeline";
 import { usePlaybackStore } from "../../stores/playback";
 import { runPipeline } from "../../hooks/useApi";
 import { StageCard } from "./StageCard";
+import { SpectralWaterfall } from "../visualizer/SpectralWaterfall";
 
 const stageModels: Record<string, { value: string; label: string }[]> = {
   denoise: [{ value: "deepfilternet", label: "DeepFilterNet" }],
@@ -45,6 +46,9 @@ export function PipelinePanel() {
 
   return (
     <div className="h-full flex flex-col p-3 gap-2">
+      <div className="h-16 rounded overflow-hidden border border-neutral-800 mb-2">
+        <SpectralWaterfall analyserNode={null} />
+      </div>
       <div className="flex items-center gap-2 flex-1 min-h-0">
         <div className="flex gap-2 flex-1 overflow-x-auto">
           {stages.map((stage) => (
