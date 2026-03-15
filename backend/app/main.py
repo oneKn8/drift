@@ -7,6 +7,7 @@ from fastapi.staticfiles import StaticFiles
 from loguru import logger
 
 from app.config import UPLOAD_DIR, ENHANCED_DIR, EXPORTS_DIR
+from app.routes.arrange import router as arrange_router
 from app.routes.library import router as library_router
 from app.routes.pipeline import router as pipeline_router
 from app.routes.ws import redis_pipeline_listener, router as ws_router
@@ -36,6 +37,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+app.include_router(arrange_router)
 app.include_router(library_router)
 app.include_router(pipeline_router)
 app.include_router(ws_router)
