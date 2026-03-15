@@ -5,7 +5,7 @@ celery_app = Celery(
     "audio_engine",
     broker=REDIS_URL,
     backend=REDIS_URL,
-    include=["app.tasks.pipeline"],
+    include=["app.tasks.pipeline", "app.tasks.mix_render"],
 )
 
 celery_app.conf.update(
