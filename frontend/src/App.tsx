@@ -1,13 +1,10 @@
 import { Layout } from "./components/layout/Layout";
+import { LibraryPanel } from "./components/library/LibraryPanel";
 
 function App() {
   return (
     <Layout
-      sidebar={
-        <div className="p-4">
-          <p className="text-xs text-neutral-500">Library</p>
-        </div>
-      }
+      sidebar={<LibraryPanel />}
       main={
         <div className="flex items-center justify-center h-full">
           <p className="text-neutral-600 text-sm font-mono">
@@ -17,7 +14,7 @@ function App() {
       }
       pipeline={
         <div className="p-4">
-          <p className="text-xs text-neutral-500">Pipeline</p>
+          <p className="text-xs text-neutral-500">Pipeline controls</p>
         </div>
       }
     />
